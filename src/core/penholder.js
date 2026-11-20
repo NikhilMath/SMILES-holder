@@ -204,7 +204,7 @@ export function buildPenholder(wasm, font, molecule, params = {}) {
 }
 
 // Scale RDKit coordinates to millimetres, rotate/mirror, centre on the origin.
-function layout(atoms, bonds, p) {
+export function layout(atoms, bonds, p) {
   const lens = bonds
     .map((b) => Math.hypot(atoms[b.a].x - atoms[b.b].x, atoms[b.a].y - atoms[b.b].y))
     .filter((l) => l > 1e-6)

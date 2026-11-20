@@ -1,0 +1,31 @@
+<!doctype html>
+<!--
+  Link-preview card (Open Graph image) for LinkedIn, iMessage, Slack, etc.
+  Dev-only: not part of the site build. `npm run og` renders it to public/og-image.png.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Link preview card</title>
+    <link rel="stylesheet" href="./og-image.css" />
+    <script src="/vendor/rdkit/RDKit_minimal.js"></script>
+    <script type="module" src="./og-image.js"></script>
+  </head>
+  <body>
+    <div class="card">
+      <div id="viewer" class="render"></div>
+      <div class="copy">
+        <div class="brand">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1f2026"/><path d="M16 5.5 25.5 11v10L16 26.5 6.5 21V11z" fill="none" stroke="#f3f0e8" stroke-width="2.4" stroke-linejoin="round"/><path d="M16 9.6 21.8 13" stroke="#e0703a" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <span>Molecule Pen Holder</span>
+        </div>
+        <h1>Type a molecule,<br /><em>print a pen holder.</em></h1>
+        <p class="sub">Turn any SMILES string into a 3D‑printable STL, right in your browser.</p>
+        <div class="field">
+          <span class="field-label">Caffeine</span>
+          <code>CN1C=NC2=C1C(=O)N(C(=O)N2C)C<i class="caret"></i></code>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

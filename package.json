@@ -9,7 +9,8 @@
     "prebuild": "node scripts/copy-vendor.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "stl": "node scripts/make-stl.mjs"
+    "stl": "node scripts/make-stl.mjs",
+    "og": "node scripts/make-og-image.mjs"
   },
   "dependencies": {
     "@rdkit/rdkit": "^2026.9.2",

@@ -48,6 +48,16 @@ This writes `caffeine.stl` plus `caffeine-body.stl` and `caffeine-accent.stl`.
 
 Netlify builds from `main` using `netlify.toml` (`npm run build` → `dist/`).
 
+## Link preview
+
+The Open Graph tags in `index.html` point at `public/og-image.png` (1200 × 630), the card LinkedIn, iMessage, Slack and others show when someone shares the link. It is rendered from `tools/og-image.html` with the same geometry code as the app (a caffeine pen holder with a few pens in it). To change it, edit that page and re-render with headless Chrome:
+
+```bash
+npm run og
+```
+
+This also writes `public/apple-touch-icon.png`. LinkedIn caches previews for about a week; paste the URL into the [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/) to refresh it.
+
 ## Printing tips
 
 - **One colour:** use *Download STL*.
