@@ -7,19 +7,8 @@ import { smilesToMolecule, smilesToSvg } from './core/molecule.js';
 import { buildPenholder, DEFAULTS } from './core/penholder.js';
 import { manifoldToSTL } from './core/stl.js';
 import { Viewer } from './viewer.js';
-
-const EXAMPLES = [
-  ['Caffeine', 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C'],
-  ['Modhephene', 'C[C@@H]1CC[C@@]23[C@@]1(CCC2)C(=CC3(C)C)C'],
-  ['THC', 'CCCCCc1cc(O)c2c(c1)OC(C)(C)[C@@H]1CCC(C)=C[C@H]21'],
-  ['Theobromine', 'CN1C=NC2=C1C(=O)NC(=O)N2C'],
-  ['Serotonin', 'C1=CC2=C(C=C1O)C(=CN2)CCN'],
-  ['Dopamine', 'C1=CC(=C(C=C1CCN)O)O'],
-  ['Aspirin', 'CC(=O)OC1=CC=CC=C1C(=O)O'],
-  ['Nicotine', 'CN1CCC[C@H]1C2=CN=CC=C2'],
-  ['Benzene', 'c1ccccc1'],
-  ['Naphthalene', 'c1ccc2ccccc2c1'],
-];
+import { EXAMPLES } from './molecules.js';
+import { setupSuggest } from './suggest.js';
 
 const SIZE_CONTROLS = [
   { key: 'bondLength', label: 'Bond length', min: 12, max: 40, step: 0.5, unit: 'mm' },
@@ -204,8 +193,13 @@ function bindEvents() {
     state.name = '';
     setSmiles(e.target.value, { fromInput: true });
   });
+  const suggest = setupSuggest($('name'), $('suggest'), ({ label, smiles }) => {
+    if (smiles) { state.name = label; setSmiles(smiles); }
+    else lookupName(label);
+  });
   $('search-form').addEventListener('submit', (e) => {
     e.preventDefault();
+    suggest.close();
     lookupName($('name').value);
   });
   const chips = $('examples');

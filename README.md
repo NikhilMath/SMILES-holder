@@ -17,6 +17,7 @@ Everything runs in the browser. There is no server.
 | 2D outlines → watertight solids (unions, offsets, extrusion) | [Manifold](https://github.com/elalish/manifold) (WASM) |
 | Preview | three.js |
 | Name → SMILES | PubChem PUG REST |
+| Name suggestions while typing | Built-in list of 130 molecules + PubChem autocomplete (3+ letters) |
 
 Code layout:
 
@@ -25,6 +26,8 @@ Code layout:
 - `src/core/penholder.js`: the geometry (walls, double-bond lines, wedges, label posts, cell floors, top layer)
 - `src/core/stl.js`: binary STL writer
 - `src/main.js`, `src/viewer.js`: UI and 3D preview
+- `src/molecules.js`: the example library and the popular molecules used for search suggestions
+- `src/suggest.js`: type-ahead suggestions for the name search
 
 ## Develop
 
