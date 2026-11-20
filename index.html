@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Molecule Pen Holder</title>
+    <meta name="description" content="Turn any molecule into a 3D-printable pen holder. Type a SMILES string or a molecule name and download an STL." />
+    <meta name="theme-color" content="#f4efe8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#17161b" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script src="/vendor/rdkit/RDKit_minimal.js" defer></script>
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.5 27 9.75v12.5L16 28.5 5 22.25V9.75z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M16 8.6 22.6 12.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <span>Molecule Pen Holder</span>
+      </a>
+      <p class="tagline">Type a molecule, print a pen holder.</p>
+    </header>
+
+    <main class="app">
+      <aside class="panel" aria-label="Design controls">
+        <section class="card">
+          <h2>Molecule</h2>
+          <form id="search-form" class="search" autocomplete="off">
+            <input id="name" type="search" placeholder="Search a name, e.g. dopamine" aria-label="Molecule name" />
+            <button type="submit" class="btn">Find</button>
+          </form>
+          <label class="field">
+            <span class="field-label">SMILES</span>
+            <textarea id="smiles" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+          </label>
+          <div id="examples" class="chips" aria-label="Examples"></div>
+          <p id="msg" class="msg" role="status" aria-live="polite"></p>
+          <figure id="drawing" class="drawing" aria-label="2D structure"></figure>
+        </section>
+
+        <section class="card">
+          <h2>Size</h2>
+          <div id="size-controls" class="controls"></div>
+          <div class="fit-row">
+            <label class="inline">
+              <span>Printer bed</span>
+              <select id="bed">
+                <option value="180">180 mm</option>
+                <option value="220" selected>220 mm</option>
+                <option value="250">250 mm</option>
+                <option value="256">256 mm</option>
+                <option value="300">300 mm</option>
+              </select>
+            </label>
+            <button id="fit" type="button" class="btn ghost">Fit to bed</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Style</h2>
+          <div id="style-controls" class="controls"></div>
+        </section>
+      </aside>
+
+      <section class="stage">
+        <div id="viewer" class="viewer"></div>
+        <div class="view-tools">
+          <button id="view-3d" type="button" class="chip">3D</button>
+          <button id="view-top" type="button" class="chip">Top</button>
+        </div>
+        <div id="loading" class="loading"><div class="spinner"></div><span>Loading chemistry engine…</span></div>
+
+        <div class="dock">
+          <dl class="stats">
+            <div><dt>Footprint</dt><dd id="stat-size">–</dd></div>
+            <div><dt>Height</dt><dd id="stat-height">–</dd></div>
+            <div><dt>Pen cells</dt><dd id="stat-cells">–</dd></div>
+            <div title="PLA weight if printed 100% solid. Infill makes the real print lighter."><dt>Filament</dt><dd id="stat-weight">–</dd></div>
+          </dl>
+          <p id="fit-msg" class="fit-msg"></p>
+          <div class="downloads">
+            <button id="dl-all" type="button" class="btn primary">Download STL</button>
+            <button id="dl-body" type="button" class="btn ghost" title="Walls and floors only">Body STL</button>
+            <button id="dl-accent" type="button" class="btn ghost" title="Top layer: bond lines and labels">Top layer STL</button>
+          </div>
+          <p id="color-tip" class="tip"></p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
