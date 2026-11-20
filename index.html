@@ -18,8 +18,34 @@
         <span>Molecule Pen Holder</span>
       </a>
       <p class="tagline">Type a molecule, print a pen holder.</p>
-      <a class="credit" href="https://nikhilmath.com" target="_blank" rel="noopener">Made by <strong>NikhilMath.com</strong></a>
+      <nav class="topbar-links">
+        <button id="about-open" type="button" class="about-link" aria-haspopup="dialog">About</button>
+        <a class="credit" href="https://nikhilmath.com" target="_blank" rel="noopener"><span class="made-by">Made by </span><strong>NikhilMath.com</strong></a>
+      </nav>
     </header>
+
+    <dialog id="about" class="about" aria-labelledby="about-title">
+      <div class="about-body">
+        <button type="button" class="about-close" data-close aria-label="Close">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <h2 id="about-title">Why I built this</h2>
+        <p class="about-lede">I built this website to turn any molecule into a 3D-printable pen holder. 🧪</p>
+        <p>Paste in a molecule’s SMILES string (the one-line text code chemists use to describe a structure), and the site creates a 3D printer file of that molecule’s skeletal formula, built as a pen holder you can keep on your desk.</p>
+        <p>I started with one molecule that means a lot to me: <button type="button" class="mol-link" data-example="Modhephene">Modhephene</button>, which my dad synthesized during his career as a chemist. Seeing something he made in the lab turn into an object I can hold and put on my desk was a great moment.</p>
+        <p>That’s when I realized this would make a great gift for:</p>
+        <ul class="gift-list">
+          <li><span class="gift-icon" aria-hidden="true">🔬</span><span>A chemist who’d like their favorite molecule (or their own work) on their desk</span></li>
+          <li><span class="gift-icon" aria-hidden="true">🎓</span><span>A chemistry grad or student finishing a big milestone</span></li>
+          <li><span class="gift-icon" aria-hidden="true">☕</span><span>Anyone who’d like a pen holder shaped like <button type="button" class="mol-link" data-example="Caffeine">caffeine</button>, <button type="button" class="mol-link" data-example="Dopamine">dopamine</button> or <button type="button" class="mol-link" data-example="Serotonin">serotonin</button></span></li>
+        </ul>
+        <p>To help you get started, I’ve put together a library of ready-made molecules. You can also enter any SMILES you like.</p>
+        <div class="about-actions">
+          <button type="button" class="btn primary" data-example="Modhephene">Try Modhephene</button>
+          <button type="button" class="btn ghost" data-library>Browse the library</button>
+        </div>
+      </div>
+    </dialog>
 
     <main class="app">
       <aside class="panel" aria-label="Design controls">

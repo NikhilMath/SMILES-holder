@@ -10,6 +10,7 @@ import { Viewer } from './viewer.js';
 
 const EXAMPLES = [
   ['Caffeine', 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C'],
+  ['Modhephene', 'C[C@@H]1CC[C@@]23[C@@]1(CCC2)C(=CC3(C)C)C'],
   ['THC', 'CCCCCc1cc(O)c2c(c1)OC(C)(C)[C@@H]1CCC(C)=C[C@H]21'],
   ['Theobromine', 'CN1C=NC2=C1C(=O)NC(=O)N2C'],
   ['Serotonin', 'C1=CC2=C(C=C1O)C(=CN2)CCN'],
@@ -225,6 +226,38 @@ function bindEvents() {
   $('bed').addEventListener('change', () => model && updateStats());
   $('view-3d').addEventListener('click', () => viewer.resetView());
   $('view-top').addEventListener('click', () => viewer.topView());
+  bindAbout();
+}
+
+// ---------- about dialog ----------
+function bindAbout() {
+  const dlg = $('about');
+  $('about-open').addEventListener('click', openAbout);
+  dlg.addEventListener('click', (e) => {
+    // The dialog box itself has no padding, so a click that lands on it directly is on the backdrop.
+    if (e.target === dlg || e.target.closest('[data-close]')) return dlg.close();
+    const ex = e.target.closest('[data-example]');
+    if (ex) {
+      const hit = EXAMPLES.find(([name]) => name === ex.dataset.example);
+      dlg.close();
+      if (hit) { state.name = hit[0]; setSmiles(hit[1]); }
+      return;
+    }
+    if (e.target.closest('[data-library]')) {
+      dlg.close();
+      const chips = $('examples');
+      chips.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      chips.querySelector('.chip')?.focus({ preventScroll: true });
+    }
+  });
+  dlg.addEventListener('close', () => history.replaceState(null, '', `${location.pathname}${location.search}`));
+  if (location.hash === '#about') openAbout();
+}
+
+function openAbout() {
+  const dlg = $('about');
+  if (!dlg.open) dlg.showModal();
+  history.replaceState(null, '', `${location.pathname}${location.search}#about`);
 }
 
 function markExample() {
@@ -309,7 +342,7 @@ function writeUrl() {
     const v = state.params[k];
     if (v !== def) q.set(k, typeof v === 'boolean' ? (v ? '1' : '0') : String(v));
   }
-  history.replaceState(null, '', `${location.pathname}?${q}`);
+  history.replaceState(null, '', `${location.pathname}?${q}${location.hash}`);
 }
 
 function slug(s) {

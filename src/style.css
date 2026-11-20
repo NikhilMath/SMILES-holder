@@ -80,9 +80,25 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .brand svg { width: 26px; height: 26px; color: var(--brand); }
 .tagline { margin: 0; color: var(--ink-3); font-size: 14px; }
-.credit {
+.topbar-links {
   margin-left: auto;
   align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.about-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.about-link:hover { color: var(--brand); }
+.credit {
   font-size: 13px;
   color: var(--ink-3);
   text-decoration: none;
@@ -288,13 +304,66 @@ input[type='range'] { width: 100%; margin: 8px 0 0; accent-color: var(--brand); 
 .fit-msg.warn { color: var(--warn); }
 .tip { grid-column: 1 / -1; margin: 0; font-size: 12.5px; color: var(--ink-3); }
 
+/* ---------- about dialog ---------- */
+.about {
+  width: min(580px, calc(100% - 32px));
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 28%);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.about::backdrop { background: rgb(23 18 14 / 45%); backdrop-filter: blur(2px); }
+.about[open] { animation: about-in 0.18s ease-out; }
+@keyframes about-in { from { opacity: 0; transform: translateY(8px); } }
+.about-body { position: relative; padding: 26px 28px 24px; }
+.about h2 { margin: 0 40px 14px 0; font-size: 22px; line-height: 1.25; letter-spacing: -0.015em; }
+.about p { margin: 0 0 12px; color: var(--ink-2); }
+.about .about-lede { font-size: 17px; font-weight: 600; color: var(--ink); }
+.about-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid var(--line); background: var(--panel-2); color: var(--ink-2);
+  cursor: pointer; transition: border-color 0.15s, color 0.15s;
+}
+.about-close:hover { border-color: var(--ink-3); color: var(--ink); }
+.about-close svg { width: 14px; height: 14px; }
+.gift-list { list-style: none; padding: 0; margin: 4px 0 16px; display: grid; gap: 8px; }
+.gift-list li {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2);
+}
+.gift-icon { flex: none; font-size: 18px; line-height: 1.3; }
+.mol-link {
+  border: 0; background: none; padding: 0;
+  font-weight: 650; color: var(--brand); cursor: pointer;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px;
+}
+.mol-link:hover { text-decoration-thickness: 2px; }
+.about-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+
 /* ---------- small screens ---------- */
 @media (max-width: 860px) {
   .tagline { display: none; }
   .topbar { padding: 12px 16px; gap: 12px; }
   .brand { font-size: 15px; gap: 8px; white-space: nowrap; }
   .brand svg { width: 22px; height: 22px; }
-  .credit { font-size: 12px; }
+  .credit, .about-link { font-size: 12px; }
+  .topbar-links { gap: 14px; }
+  .about-body { padding: 22px 20px 20px; }
+  .about-actions .btn { flex: 1; }
+}
+@media (max-width: 480px) {
+  .topbar { flex-wrap: wrap; row-gap: 6px; }
+  .topbar-links { gap: 12px; }
+  .credit .made-by { display: none; }
   .app { display: flex; flex-direction: column-reverse; height: auto; }
   .panel { overflow: visible; border-right: 0; padding: 16px; }
   .stage { height: 78vh; height: 78dvh; }
