@@ -1,6 +1,6 @@
 # SMILES-holder
 
-Turn any molecule into a 3D-printable pen holder. Type a SMILES string (or search a name), see a live 3D preview, and download an STL.
+Turn any molecule into a 3D-printable pen holder. Type a SMILES string (or search a name), see a live 3D preview, and download an STL, or a two-colour 3MF for Bambu Studio.
 
 **Live site:** https://smiles-penholder.netlify.app
 
@@ -25,6 +25,7 @@ Code layout:
 - `src/core/labels.js`: which atoms get labels, H placement, glyph layout with subscripts and charges
 - `src/core/penholder.js`: the geometry (walls, double-bond lines, wedges, label posts, cell floors, top layer)
 - `src/core/stl.js`: binary STL writer
+- `src/core/threemf.js`: 3MF writer (one object, body on filament 1 and top layer on filament 2, for Bambu Studio and OrcaSlicer)
 - `src/main.js`, `src/viewer.js`: UI and 3D preview
 - `src/molecules.js`: the example library and the popular molecules used for search suggestions
 - `src/suggest.js`: type-ahead suggestions for the name search
@@ -45,7 +46,7 @@ Command-line generator (same geometry code, useful for testing):
 npm run stl -- "CN1C=NC2=C1C(=O)N(C(=O)N2C)C" caffeine.stl --bondLength=22 --height=80
 ```
 
-This writes `caffeine.stl` plus `caffeine-body.stl` and `caffeine-accent.stl`.
+This writes `caffeine.stl` plus `caffeine-body.stl`, `caffeine-accent.stl` and `caffeine.3mf`.
 
 ## Deploy
 
@@ -64,7 +65,8 @@ This also writes `public/apple-touch-icon.png`. LinkedIn caches previews for abo
 ## Printing tips
 
 - **One colour:** use *Download STL*.
-- **Two colours, multi-material printer:** load *Body STL* and *Top layer STL* together as one multi-part object, then assign a filament to each.
+- **Two colours, Bambu Studio or OrcaSlicer:** use *Bambu 3MF*. It opens as one object with two parts, the body on filament 1 and the top layer on filament 2. Pick a colour for each filament (or sync your AMS) and slice. There is one filament change, at the top layer. If you only have one filament set up, Bambu Studio adds the second.
+- **Two colours, other multi-material slicers:** load *Body STL* and *Top layer STL* together as one multi-part object, then assign a filament to each.
 - **Two colours, one nozzle:** print the full STL and add a filament change at the Z height shown under the download buttons (height minus the top layer).
 - Ring cells need to be about 12 mm across or more to hold a pen. Raise the bond length if the app warns you.
 - Molecules without rings have no closed cells. Use the *Full plate* base so it stands up.

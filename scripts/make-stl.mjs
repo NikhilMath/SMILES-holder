@@ -9,6 +9,7 @@ import { Font } from 'three/addons/loaders/FontLoader.js';
 import { smilesToMolecule } from '../src/core/molecule.js';
 import { buildPenholder, DEFAULTS } from '../src/core/penholder.js';
 import { manifoldToSTL } from '../src/core/stl.js';
+import { manifoldsTo3MF } from '../src/core/threemf.js';
 
 const require = createRequire(import.meta.url);
 const initRDKitModule = require('@rdkit/rdkit');
@@ -42,6 +43,10 @@ writeFileSync(out, manifoldToSTL(combined));
 const base = out.replace(/\.stl$/i, '');
 writeFileSync(`${base}-body.stl`, manifoldToSTL(body));
 writeFileSync(`${base}-accent.stl`, manifoldToSTL(accent));
+writeFileSync(`${base}.3mf`, await manifoldsTo3MF([
+  { name: 'Body', manifold: body, filament: 1 },
+  { name: 'Top layer', manifold: accent, filament: 2 },
+], { name: 'Pen holder', center: [128, 128] }));
 
 console.log(JSON.stringify({
   ms: Math.round(ms),

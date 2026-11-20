@@ -6,6 +6,7 @@ import fontData from './assets/fonts/droid_sans_bold.typeface.json';
 import { smilesToMolecule, smilesToSvg } from './core/molecule.js';
 import { buildPenholder, DEFAULTS } from './core/penholder.js';
 import { manifoldToSTL } from './core/stl.js';
+import { manifoldsTo3MF } from './core/threemf.js';
 import { Viewer } from './viewer.js';
 import { EXAMPLES } from './molecules.js';
 import { setupSuggest } from './suggest.js';
@@ -119,7 +120,8 @@ function updateStats() {
   fit.classList.toggle('warn', notes.length > 0);
 
   $('color-tip').textContent =
-    `Two colours: load Body + Top layer as one multi-part object, or with one nozzle swap filament at Z = ${info.accentZ.toFixed(1)} mm.`;
+    `Two colours: the Bambu 3MF opens in Bambu Studio or OrcaSlicer with the body on filament 1 and the top layer on filament 2, so you only pick the colours. ` +
+    `In other slicers, load Body + Top layer as one multi-part object, or with one nozzle swap filament at Z = ${info.accentZ.toFixed(1)} mm.`;
 }
 
 // ---------- downloads ----------
@@ -130,17 +132,41 @@ function download(kind) {
   try {
     const bytes = manifoldToSTL(solid, `${state.name || 'molecule'} pen holder`);
     const suffix = kind === 'all' ? '' : kind === 'body' ? '-body' : '-top';
-    const blob = new Blob([bytes], { type: 'model/stl' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${slug(state.name || 'molecule')}-pen-holder${suffix}.stl`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    saveFile(bytes, 'model/stl', `${slug(state.name || 'molecule')}-pen-holder${suffix}.stl`);
   } finally {
     if (kind === 'all') solid.delete();
   }
+}
+
+// One object, two parts: body on filament 1, top layer on filament 2 (Bambu Studio / OrcaSlicer).
+async function download3MF() {
+  if (!model) return;
+  const btn = $('dl-3mf');
+  btn.disabled = true;
+  try {
+    const half = Number($('bed').value) / 2; // land in the middle of the plate
+    const bytes = await manifoldsTo3MF([
+      { name: 'Body', manifold: model.body, filament: 1 },
+      { name: 'Top layer', manifold: model.accent, filament: 2 },
+    ], { name: `${state.name || 'Molecule'} pen holder`, center: [half, half] });
+    saveFile(bytes, 'model/3mf', `${slug(state.name || 'molecule')}-pen-holder.3mf`);
+  } catch (err) {
+    console.error(err);
+    showMsg(`Could not make the 3MF: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function saveFile(bytes, type, filename) {
+  const blob = new Blob([bytes], { type });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
 function fitToBed() {
@@ -216,6 +242,7 @@ function bindEvents() {
   $('dl-all').addEventListener('click', () => download('all'));
   $('dl-body').addEventListener('click', () => download('body'));
   $('dl-accent').addEventListener('click', () => download('accent'));
+  $('dl-3mf').addEventListener('click', download3MF);
   $('fit').addEventListener('click', fitToBed);
   $('bed').addEventListener('change', () => model && updateStats());
   $('view-3d').addEventListener('click', () => viewer.resetView());

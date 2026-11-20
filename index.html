@@ -60,7 +60,8 @@
             "Search molecules by name, e.g. caffeine, dopamine, serotonin",
             "Interactive 3D preview",
             "Fit the model to your printer bed",
-            "Download STL files, including a separate top layer for two-color prints"
+            "Download STL files, including a separate top layer for two-color prints",
+            "Download a two-color 3MF for Bambu Studio and OrcaSlicer, with the body and top layer on separate filaments"
           ],
           "keywords": "molecule pen holder, SMILES to STL, 3D printed molecule, chemistry gift, skeletal formula 3D print",
           "creator": { "@type": "Person", "name": "Nikhil Math", "url": "https://nikhilmath.com" },
@@ -170,6 +171,9 @@
             <button id="dl-all" type="button" class="btn primary">Download STL</button>
             <button id="dl-body" type="button" class="btn ghost" title="Walls and floors only">Body STL</button>
             <button id="dl-accent" type="button" class="btn ghost" title="Top layer: bond lines and labels">Top layer STL</button>
+            <button id="dl-3mf" type="button" class="btn ghost two-tone" title="One file for Bambu Studio or OrcaSlicer: body on filament 1, top layer on filament 2. Change either colour in the filament list.">
+              <span class="swatch" aria-hidden="true"></span>Bambu 3MF
+            </button>
           </div>
           <p id="color-tip" class="tip"></p>
         </div>
