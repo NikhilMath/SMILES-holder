@@ -1,0 +1,13 @@
+{
+  "name": "Molecule Pen Holder",
+  "short_name": "Pen Holder",
+  "description": "Turn any molecule into a 3D-printable pen holder.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4efe8",
+  "theme_color": "#f4efe8",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

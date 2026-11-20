@@ -3,8 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Molecule Pen Holder</title>
-    <meta name="description" content="Turn any molecule into a 3D-printable pen holder. Type a SMILES string or a molecule name and download an STL." />
+    <title>Molecule Pen Holder: turn any molecule into a 3D-printable STL</title>
+    <meta name="description" content="Free online generator that turns any molecule into a 3D-printable pen holder. Type a SMILES string or search a name like caffeine or dopamine, preview it in 3D and download an STL. A great gift for chemists." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#f4efe8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#17161b" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -22,17 +23,61 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="A black 3D-printed pen holder shaped like the caffeine molecule, holding two pens and a pencil, next to the words: Type a molecule, print a pen holder." />
+    <meta property="og:locale" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Molecule Pen Holder: type a molecule, print a pen holder" />
+    <meta name="twitter:description" content="Turn any molecule into a 3D-printable pen holder. Type a SMILES string or search a name, preview it in 3D and download an STL." />
+    <meta name="twitter:image" content="https://smiles-penholder.netlify.app/og-image.png" />
+    <meta name="twitter:image:alt" content="A black 3D-printed pen holder shaped like the caffeine molecule, holding two pens and a pencil." />
     <meta name="author" content="Nikhil Math" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Structured data so search engines understand this is a free web app -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://smiles-penholder.netlify.app/#website",
+          "url": "https://smiles-penholder.netlify.app/",
+          "name": "Molecule Pen Holder",
+          "inLanguage": "en"
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Molecule Pen Holder",
+          "url": "https://smiles-penholder.netlify.app/",
+          "description": "Turn any molecule into a 3D-printable pen holder. Type a SMILES string or search a molecule name, preview the skeletal formula in 3D and download an STL file for your 3D printer.",
+          "applicationCategory": "DesignApplication",
+          "operatingSystem": "Any (runs in the browser)",
+          "browserRequirements": "Requires JavaScript and WebAssembly",
+          "isAccessibleForFree": true,
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "image": "https://smiles-penholder.netlify.app/og-image.png",
+          "featureList": [
+            "Build a pen holder from any SMILES string",
+            "Search molecules by name, e.g. caffeine, dopamine, serotonin",
+            "Interactive 3D preview",
+            "Fit the model to your printer bed",
+            "Download STL files, including a separate top layer for two-color prints"
+          ],
+          "keywords": "molecule pen holder, SMILES to STL, 3D printed molecule, chemistry gift, skeletal formula 3D print",
+          "creator": { "@type": "Person", "name": "Nikhil Math", "url": "https://nikhilmath.com" },
+          "isPartOf": { "@id": "https://smiles-penholder.netlify.app/#website" }
+        }
+      ]
+    }
+    </script>
     <script src="/vendor/rdkit/RDKit_minimal.js" defer></script>
     <script type="module" src="/src/main.js"></script>
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="/">
+      <h1 class="site-title"><a class="brand" href="/">
         <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.5 27 9.75v12.5L16 28.5 5 22.25V9.75z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M16 8.6 22.6 12.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
         <span>Molecule Pen Holder</span>
-      </a>
+      </a></h1>
       <p class="tagline">Type a molecule, print a pen holder.</p>
       <nav class="topbar-links">
         <button id="about-open" type="button" class="about-link" aria-haspopup="dialog">About</button>
