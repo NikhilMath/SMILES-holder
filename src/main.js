@@ -121,7 +121,13 @@ function updateStats() {
 
   $('color-tip').textContent =
     `Two colours: the Bambu 3MF opens in Bambu Studio or OrcaSlicer with the body on filament 1 and the top layer on filament 2, so you only pick the colours. ` +
-    `In other slicers, load Body + Top layer as one multi-part object, or with one nozzle swap filament at Z = ${info.accentZ.toFixed(1)} mm.`;
+    `In other slicers, load Body + Top layer as one multi-part object, or with one nozzle swap filament at the ${swapLayerZ(info.accentZ).toFixed(1)} mm layer (0.2 mm layers).`;
+}
+
+// Slicers list layers by their top height and put a layer in the top colour when its middle is
+// above the body, so the filament change goes on the first such layer (78.2 mm for an 80 mm holder).
+function swapLayerZ(bodyTopZ, layer = 0.2) {
+  return (Math.floor(bodyTopZ / layer + 0.5 + 1e-9) + 1) * layer;
 }
 
 // ---------- downloads ----------

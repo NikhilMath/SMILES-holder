@@ -67,7 +67,7 @@ This also writes `public/apple-touch-icon.png`. LinkedIn caches previews for abo
 - **One colour:** use *Download STL*.
 - **Two colours, Bambu Studio or OrcaSlicer:** use *Bambu 3MF*. It opens as one object with two parts, the body on filament 1 and the top layer on filament 2. Pick a colour for each filament (or sync your AMS) and slice. There is one filament change, at the top layer. If you only have one filament set up, Bambu Studio adds the second.
 - **Two colours, other multi-material slicers:** load *Body STL* and *Top layer STL* together as one multi-part object, then assign a filament to each.
-- **Two colours, one nozzle:** print the full STL and add a filament change at the Z height shown under the download buttons (height minus the top layer).
+- **Two colours, one nozzle:** print the full STL and add a filament change at the layer shown under the download buttons. That is the first layer above the body, e.g. 78.2 mm for an 80 mm holder at 0.2 mm layers.
 - Ring cells need to be about 12 mm across or more to hold a pen. Raise the bond length if the app warns you.
 - Molecules without rings have no closed cells. Use the *Full plate* base so it stands up.
 
