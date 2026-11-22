@@ -6,7 +6,8 @@ import fontData from './assets/fonts/droid_sans_bold.typeface.json';
 import { smilesToMolecule, smilesToSvg } from './core/molecule.js';
 import { buildPenholder, DEFAULTS } from './core/penholder.js';
 import { conformerFor } from './core/conformer.js';
-import { buildSticks, STICK_DEFAULTS } from './core/sticks.js';
+import { buildSticks, freeSticks, splitByElement, STICK_DEFAULTS } from './core/sticks.js';
+import { assignFilaments } from './core/elements.js';
 import { manifoldToSTL } from './core/stl.js';
 import { manifoldsTo3MF } from './core/threemf.js';
 import { Viewer } from './viewer.js';
@@ -54,7 +55,7 @@ const state = {
 };
 let engine = null; // { RDKit, wasm, font }
 let model = null; // { body, accent, info }
-let sticks = null; // { plate, marks, assembled, info, note }
+let sticks = null; // { plate, marks, assembled, info, layout, colours, assembledColours, note } colours: one solid per element
 let molCache = { smiles: null, molecule: null };
 const confCache = new Map(); // SMILES -> 3D conformer
 let confJob = null; // the conformer worker currently running
@@ -163,8 +164,14 @@ async function regenerateSticks() {
 function buildStickModel(conf) {
   try {
     const next = buildSticks(engine.wasm, conf, state.mparams);
-    if (sticks) for (const m of [sticks.plate, sticks.marks, sticks.assembled]) m.delete();
-    sticks = { ...next, note: conf.note };
+    let colours = null;
+    try {
+      colours = assignFilaments(splitByElement(engine.wasm, next));
+    } catch (err) {
+      console.error(err); // still printable in one colour
+    }
+    if (sticks) freeStickModel(sticks);
+    sticks = { ...next, colours, assembledColours: null, note: conf.note };
     showSticks(takeRefit());
     showMsg(state.name ? state.name : '', 'ok');
     updateStats();
@@ -174,10 +181,37 @@ function buildStickModel(conf) {
   }
 }
 
+function freeStickModel(s) {
+  freeSticks(s);
+  for (const g of [...(s.colours ?? []), ...(s.assembledColours ?? [])]) g.solid.delete();
+}
+
 function showSticks(refit) {
   if (!sticks) return;
-  if (state.assembled) viewer.setModel(sticks.assembled.getMesh(), EMPTY_MESH, { refit });
-  else viewer.setModel(sticks.plate.getMesh(), sticks.marks.getMesh(), { refit });
+  const coloured = (groups) => groups.map((g) => ({ mesh: g.solid.getMesh(), color: g.shade }));
+  if (state.assembled) {
+    if (sticks.colours && !sticks.assembledColours) {
+      try {
+        sticks.assembledColours = assignFilaments(splitByElement(engine.wasm, sticks, 'assembled'));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    viewer.setModel(sticks.assembledColours ? coloured(sticks.assembledColours) : sticks.assembled.getMesh(), EMPTY_MESH, { refit });
+  } else {
+    viewer.setModel(sticks.colours ? coloured(sticks.colours) : sticks.plate.getMesh(), sticks.marks.getMesh(), { refit });
+  }
+  updateSwatch();
+}
+
+// The 3MF button's dot shows the colours in the file.
+function updateSwatch() {
+  const dot = $('dl-3mf').querySelector('.swatch');
+  const cols = state.mode === 'molecule' && sticks?.colours ? [...new Set(sticks.colours.map((g) => g.shade))].slice(0, 4) : null;
+  if (!cols || cols.length < 2) { dot.style.background = ''; return; }
+  const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
+  const step = 360 / cols.length;
+  dot.style.background = `conic-gradient(${cols.map((c, i) => `${hex(c)} ${i * step}deg ${(i + 1) * step}deg`).join(', ')})`;
 }
 
 // OpenChemLib runs in a worker. Each molecule gets a fresh one: that cancels a slow job when the
@@ -229,7 +263,7 @@ function setBusy(text) {
   el.hidden = !text;
   el.classList.toggle('over', !!text);
   if (text) el.querySelector('span').textContent = text;
-  for (const id of ['dl-all', 'dl-whole']) $(id).disabled = !!text; // the model on screen is the previous molecule
+  for (const id of ['dl-all', 'dl-whole', 'dl-3mf']) $(id).disabled = !!text; // the model on screen is the previous molecule
 }
 
 function updateStats() {
@@ -264,7 +298,23 @@ function updateStickStats() {
     ? 'Two halves: print both cut face down, then glue them face to face with a drop of superglue. The faces are mirror images, so they line up by hand.'
     : 'One piece: it prints on the flat spot shaved off its underside.';
   const bits = extra > 0 ? ` ${extra === 1 ? 'One small bit prints' : `${extra} small bits print`} on its own: glue it back where it fits.` : '';
-  $('color-tip').textContent = `${how}${bits} Scale: 1 Å = ${info.scale.toFixed(1)} mm.`;
+  $('color-tip').textContent = `${how}${bits} Scale: 1 Å = ${info.scale.toFixed(1)} mm.${colourTip(sticks.colours)}`;
+}
+
+// Which filament each element is on in the 3MF, e.g. "1 carbon (black), 2 oxygen (red)".
+function colourTip(colours) {
+  if (!colours || colours.length < 2) return '';
+  const slots = new Map();
+  for (const g of colours) {
+    if (!slots.has(g.filament)) slots.set(g.filament, []);
+    slots.get(g.filament).push(g);
+  }
+  const list = [...slots].map(([f, gs]) =>
+    `${f} ${gs[0].name.toLowerCase()} (${gs[0].colourName})${gs.slice(1).map((g) => ` + ${g.name.toLowerCase()}`).join('')}`);
+  const shared = colours.length > slots.size
+    ? ' An AMS has four slots, so the rarest elements share the last one; give one its own filament by changing its part in the slicer.'
+    : '';
+  return ` Colours: the Bambu 3MF puts each element on its own filament: ${list.join(', ')}.${shared} Each bond changes colour halfway, so most layers need filament changes: it prints slower and purges more than one colour.`;
 }
 
 function updateHolderStats() {
@@ -304,7 +354,7 @@ function download(kind) {
     if (!sticks) return;
     const whole = kind === 'whole';
     const bytes = manifoldToSTL(whole ? sticks.assembled : sticks.plate, `${state.name || 'molecule'} stick model`);
-    saveFile(bytes, 'model/stl', `${slug(state.name || 'molecule')}-molecule${whole ? '-whole' : ''}.stl`);
+    saveFile(bytes, 'model/stl', `${stickFileBase()}${whole ? '-whole' : ''}.stl`);
     return;
   }
   if (!model) return;
@@ -320,17 +370,22 @@ function download(kind) {
 }
 
 // One object, two parts: body on filament 1, top layer on filament 2 (Bambu Studio / OrcaSlicer).
+// Stick model: one part per element, carbon on filament 1.
 async function download3MF() {
-  if (!model) return;
+  const m = state.mode === 'molecule';
+  if (m ? !sticks : !model) return;
   const btn = $('dl-3mf');
   btn.disabled = true;
   try {
     const half = Number($('bed').value) / 2; // land in the middle of the plate
-    const bytes = await manifoldsTo3MF([
-      { name: 'Body', manifold: model.body, filament: 1 },
-      { name: 'Top layer', manifold: model.accent, filament: 2 },
-    ], { name: `${state.name || 'Molecule'} pen holder`, center: [half, half] });
-    saveFile(bytes, 'model/3mf', `${slug(state.name || 'molecule')}-pen-holder.3mf`);
+    const name = state.name || 'Molecule';
+    const parts = !m
+      ? [{ name: 'Body', manifold: model.body, filament: 1 }, { name: 'Top layer', manifold: model.accent, filament: 2 }]
+      : sticks.colours
+        ? sticks.colours.map((g) => ({ name: `${g.name} (${g.colourName})`, manifold: g.solid, filament: g.filament }))
+        : [{ name: 'Molecule', manifold: sticks.plate, filament: 1 }];
+    const bytes = await manifoldsTo3MF(parts, { name: `${name} ${m ? 'stick model' : 'pen holder'}`, center: [half, half] });
+    saveFile(bytes, 'model/3mf', `${m ? stickFileBase() : `${slug(state.name || 'molecule')}-pen-holder`}.3mf`);
   } catch (err) {
     console.error(err);
     showMsg(`Could not make the 3MF: ${err.message}`, 'error');
@@ -421,8 +476,12 @@ function applyMode() {
   $('style-controls').hidden = m;
   $('msize-controls').hidden = !m;
   $('mstyle-controls').hidden = !m;
-  for (const id of ['dl-body', 'dl-accent', 'dl-3mf']) $(id).hidden = m;
+  for (const id of ['dl-body', 'dl-accent']) $(id).hidden = m;
   $('dl-whole').hidden = !m;
+  $('dl-3mf').title = m
+    ? 'One file for Bambu Studio or OrcaSlicer with each element on its own filament, carbon on 1. Change any colour in the filament list.'
+    : 'One file for Bambu Studio or OrcaSlicer: body on filament 1, top layer on filament 2. Change either colour in the filament list.';
+  updateSwatch();
   $('view-assembled').hidden = !m;
   $('stat-cells-label').textContent = m ? 'Supports' : 'Pen cells';
   $('mode-link').textContent = m ? '← Back to the pen holder' : 'Just print the molecule →';
@@ -618,6 +677,11 @@ function writeUrl() {
   }
   history.replaceState(null, '', `${location.pathname}?${q}${location.hash}`);
   updateModeLink();
+}
+
+// caffeine-molecule.stl, or molecule.stl for a SMILES typed in without a name
+function stickFileBase() {
+  return state.name ? `${slug(state.name)}-molecule` : 'molecule';
 }
 
 function slug(s) {

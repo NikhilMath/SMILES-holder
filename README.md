@@ -6,7 +6,7 @@ Turn any molecule into a 3D-printable pen holder. Type a SMILES string (or searc
 
 The skeletal formula is drawn flat and every bond becomes a vertical wall. Rings become closed cells with a floor, and those cells hold the pens. Atom labels (N, OH, H₃C, …), double bonds and stereo wedges are drawn on the top face as a separate top layer, so you can print that layer in a second colour.
 
-**Just print the molecule:** the link at the bottom switches to a 3D stick model of the molecule itself (its real shape, not the flat drawing). To print with few or no supports, the model is cut flat: either shaved under its lowest atoms (one piece) or split through the middle into two halves that print cut face down and are glued face to face.
+**Just print the molecule:** the link at the bottom switches to a 3D stick model of the molecule itself (its real shape, not the flat drawing). To print with few or no supports, the model is cut flat: either shaved under its lowest atoms (one piece) or split through the middle into two halves that print cut face down and are glued face to face. The preview and the *Bambu 3MF* are coloured by element like a model kit (carbon black, oxygen red, nitrogen blue, …), each element on its own filament.
 
 ## How it works
 
@@ -30,7 +30,8 @@ Code layout:
 - `src/core/stl.js`: binary STL writer
 - `src/core/threemf.js`: 3MF writer (one object, body on filament 1 and top layer on filament 2, for Bambu Studio and OrcaSlicer)
 - `src/core/conformer.js`, `src/core/conformer-worker.js`: 3D conformer for the stick model (flattest of a few dozen likely conformers, stereo checked, retried with other seeds)
-- `src/core/sticks.js`: stick-model geometry and the search for the flat cut that needs the fewest supports
+- `src/core/sticks.js`: stick-model geometry, the search for the flat cut that needs the fewest supports, and the split into one part per element (each point goes to its nearest atom, so every bond changes colour halfway)
+- `src/core/elements.js`: element names, model-kit colours and which filament each element gets
 - `src/main.js`, `src/viewer.js`: UI and 3D preview
 - `src/molecules.js`: the example library and the popular molecules used for search suggestions
 - `src/suggest.js`: type-ahead suggestions for the name search
@@ -59,7 +60,7 @@ Stick model of the molecule itself:
 npm run molecule -- "CN1C=NC2=C1C(=O)N(C(=O)N2C)C" caffeine-sticks.stl --stickBond=15 --stick=5 --hydrogens=true --pieces=two
 ```
 
-This writes the print plate and `caffeine-sticks-assembled.stl` (the whole molecule in one piece).
+This writes the print plate, `caffeine-sticks-assembled.stl` (the whole molecule in one piece) and `caffeine-sticks.3mf` (coloured by element).
 
 ## Deploy
 
@@ -90,6 +91,7 @@ This also writes `public/apple-touch-icon.png`. LinkedIn caches previews for abo
 - Atoms that still need support are shown in orange, and the count is under *Supports*. Tree supports in the slicer handle them.
 - Hydrogens are off by default: a hydrogen hanging under its carbon always needs support. Turn them on for the full molecule.
 - *Whole model STL* is the molecule in one piece, for resin printers or printing with supports.
+- **Colours, Bambu Studio or OrcaSlicer:** *Bambu 3MF* opens as one object with one part per element, named after the element and its usual colour. Carbon is on filament 1, then the others by how many atoms they have; the tip under the downloads lists them. Load those colours (or sync your AMS) and slice. An AMS has four slots, so if a molecule has more than four elements (usually only with hydrogens on), the rarest ones share filament 4. Change a part's filament to give it its own. Every bond changes colour halfway, so most layers have filament changes: expect a longer print and more purge than one colour.
 - Across the 130 built-in molecules (skeleton only), about two thirds print with no supports at all.
 
 ## Licenses

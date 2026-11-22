@@ -1,4 +1,4 @@
-// three.js preview of the pen holder (Z up, millimetres).
+// three.js preview of the pen holder or stick model (Z up, millimetres).
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -44,6 +44,7 @@ export class Viewer {
     this.materials = {
       body: new THREE.MeshStandardMaterial({ color: 0x23252b, roughness: 0.62, metalness: 0.02 }),
       accent: new THREE.MeshStandardMaterial({ color: 0xf3f0e8, roughness: 0.48, metalness: 0.0 }),
+      colored: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.02 }),
     };
     this.meshes = { body: null, accent: null };
     this.radius = 100;
@@ -72,12 +73,16 @@ export class Viewer {
     this.materials.accent.color.set(accent);
   }
 
-  /** @param body/accent manifold Mesh objects ({vertProperties, triVerts, numProp}) */
-  setModel(bodyMesh, accentMesh, { refit = false } = {}) {
-    for (const [name, mesh] of [['body', bodyMesh], ['accent', accentMesh]]) {
+  /**
+   * @param body   manifold Mesh ({vertProperties, triVerts, numProp}), or [{ mesh, color }] for several colours
+   * @param accent manifold Mesh
+   */
+  setModel(body, accentMesh, { refit = false } = {}) {
+    for (const [name, mesh] of [['body', body], ['accent', accentMesh]]) {
       const old = this.meshes[name];
       if (old) { this.scene.remove(old); old.geometry.dispose(); }
-      const obj = new THREE.Mesh(toGeometry(mesh), this.materials[name]);
+      const colored = Array.isArray(mesh);
+      const obj = new THREE.Mesh(colored ? coloredGeometry(mesh) : toGeometry(mesh), colored ? this.materials.colored : this.materials[name]);
       obj.castShadow = true;
       obj.receiveShadow = true;
       this.scene.add(obj);
@@ -129,6 +134,29 @@ export class Viewer {
     this.camera.position.set(this.center.x, this.center.y - 0.001, this.center.z + dist);
     this.camera.updateProjectionMatrix();
   }
+}
+
+function coloredGeometry(parts) {
+  const geos = parts.map(({ mesh }) => toGeometry(mesh));
+  const count = geos.reduce((n, g) => n + g.attributes.position.count, 0);
+  const pos = new Float32Array(count * 3);
+  const nor = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  let o = 0;
+  geos.forEach((g, i) => {
+    const n = g.attributes.position.count;
+    pos.set(g.attributes.position.array, o * 3);
+    nor.set(g.attributes.normal.array, o * 3);
+    const c = new THREE.Color(parts[i].color); // converted to linear, like material colours
+    for (let v = o; v < o + n; v++) { col[3 * v] = c.r; col[3 * v + 1] = c.g; col[3 * v + 2] = c.b; }
+    o += n;
+    g.dispose();
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return g;
 }
 
 function toGeometry(mesh) {

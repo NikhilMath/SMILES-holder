@@ -37,7 +37,7 @@ const tallness = (h) => 0.004 * h + 0.015 * Math.max(0, h - 25);
 /**
  * @param wasm   initialised manifold-3d module
  * @param mol3d  { atoms: [{z, x, y, zc}] in Å, bonds: [{a, b, order}] } from conformer.js
- * @returns {{ plate: Manifold, marks: Manifold, assembled: Manifold, info: object }} caller deletes the manifolds
+ * @returns {{ plate, marks, assembled, info, layout }} free the manifolds with freeSticks()
  */
 export function buildSticks(wasm, mol3d, params = {}) {
   const p = { ...STICK_DEFAULTS, ...params };
@@ -50,11 +50,13 @@ export function buildSticks(wasm, mol3d, params = {}) {
   const index = new Map();
   const pts = [];
   const isH = [];
+  const elements = [];
   mol3d.atoms.forEach((a, i) => {
     if (!keep[i]) return;
     index.set(i, pts.length);
     pts.push([a.x * scale, a.y * scale, a.zc * scale]);
     isH.push(a.z === 1);
+    elements.push(a.z);
   });
   if (!pts.length) throw new Error('Nothing to build for this molecule.');
   const bonds = mol3d.bonds
@@ -71,7 +73,7 @@ export function buildSticks(wasm, mol3d, params = {}) {
   // ---------- solids ----------
   const pool = [];
   const k = (o) => (pool.push(o), o);
-  let plate = null, marks = null, assembled = null;
+  let plate = null, marks = null, assembled = null, placed = [];
   try {
     const segs = pts.length > 160 ? 16 : pts.length > 80 ? 20 : r > 4 ? 32 : 24;
     const ball = k(Manifold.sphere(r, segs));
@@ -88,10 +90,11 @@ export function buildSticks(wasm, mol3d, params = {}) {
     const anchors = (sign) => Q.filter((q) => sign * (q[2] - c) > -KEEP * r)
       .map((q) => [q[0], q[1], sign > 0 ? Math.max(q[2], c + 0.01) : Math.min(q[2], c - 0.01)]);
     const top = k(keepAnchored(Manifold, k(whole.trimByPlane([0, 0, 1], c)), anchors(1), k).translate([0, 0, -c]));
-    const parts = [{ solid: top, place: (q) => [q[0], q[1], q[2] - c], atoms: plan.unsupported.top }];
+    // flip + t: how each part sits relative to the assembled frame (flip = turned over about X)
+    const parts = [{ solid: top, place: (q) => [q[0], q[1], q[2] - c], atoms: plan.unsupported.top, flip: false, t: [0, 0, -c] }];
     if (plan.mode === 'two') {
       const bottom = k(keepAnchored(Manifold, k(whole.trimByPlane([0, 0, -1], -c)), anchors(-1), k).rotate([180, 0, 0]).translate([0, 0, c]));
-      parts.push({ solid: bottom, place: (q) => [q[0], -q[1], c - q[2]], atoms: plan.unsupported.bottom });
+      parts.push({ solid: bottom, place: (q) => [q[0], -q[1], c - q[2]], atoms: plan.unsupported.bottom, flip: true, t: [0, 0, c] });
     }
 
     // Lay the parts side by side (y), centred on the origin
@@ -105,7 +108,7 @@ export function buildSticks(wasm, mol3d, params = {}) {
     const xs = boxes.map((bb) => [bb.min[0], bb.max[0]]).flat();
     const dx = -(Math.min(...xs) + Math.max(...xs)) / 2;
     const dy = -(y - GAP) / 2;
-    const placed = parts.map((pt, i) => k(pt.solid.translate([dx, shifts[i] + dy, 0])));
+    placed = parts.map((pt, i) => pt.solid.translate([dx, shifts[i] + dy, 0]));
     plate = Manifold.compose(placed);
 
     // Orange balls where the slicer will want support
@@ -119,10 +122,20 @@ export function buildSticks(wasm, mol3d, params = {}) {
     marks = markBalls.length ? k(Manifold.union(markBalls)).trimByPlane([0, 0, 1], 0) : Manifold.compose([]);
 
     const wb = whole.boundingBox();
-    assembled = whole.translate([-(wb.min[0] + wb.max[0]) / 2, -(wb.min[1] + wb.max[1]) / 2, -wb.min[2]]);
+    const toAssembled = [-(wb.min[0] + wb.max[0]) / 2, -(wb.min[1] + wb.max[1]) / 2, -wb.min[2]];
+    assembled = whole.translate(toAssembled);
 
     const bb = plate.boundingBox();
     const partCount = placed.reduce((sum, s) => sum + s.decompose().map(k).length, 0);
+    const maxBond = Math.max(0, ...bonds.map((b) => Math.hypot(...sub3(pts[b.a], pts[b.b]))));
+    const layout = {
+      parts: placed.map((solid, i) => ({ solid, flip: parts[i].flip, t: add3(parts[i].t, [dx, shifts[i] + dy, 0]) })),
+      assembledAt: { flip: false, t: toAssembled },
+      atoms: Q,
+      elements,
+      r,
+      maxBond,
+    };
     const info = {
       mode: plan.mode,
       size: [0, 1, 2].map((i) => bb.max[i] - bb.min[i]),
@@ -134,9 +147,84 @@ export function buildSticks(wasm, mol3d, params = {}) {
       hydrogens: isH.filter(Boolean).length,
       scale,
     };
-    return { plate, marks, assembled, info };
+    return { plate, marks, assembled, info, layout };
   } catch (err) {
-    for (const o of [plate, marks, assembled]) o?.delete();
+    for (const o of [plate, marks, assembled, ...placed]) o?.delete();
+    throw err;
+  } finally {
+    for (const o of pool) o.delete();
+  }
+}
+
+export function freeSticks(built) {
+  for (const m of [built.plate, built.marks, built.assembled, ...built.layout.parts.map((p) => p.solid)]) m.delete();
+}
+
+// ---------- colour by element ----------
+
+/**
+ * Splits the printed parts by element, the way model kits colour sticks: every point goes to its
+ * nearest atom, so each bond changes colour at its middle and the two halves still match when
+ * glued. Each atom's share is its Voronoi cell, cut from a box it cannot reach past.
+ * @param which 'plate' (the parts laid out to print) or 'assembled'
+ * @returns [{ z, count, solid }] one solid per element (caller deletes them)
+ */
+export function splitByElement(wasm, built, which = 'plate') {
+  const { Manifold } = wasm;
+  const { atoms: Q, elements, r, maxBond } = built.layout;
+  const parts = which === 'assembled' ? [{ solid: built.assembled, ...built.layout.assembledAt }] : built.layout.parts;
+  const pool = [];
+  const k = (o) => (pool.push(o), o);
+
+  const groups = new Map();
+  elements.forEach((z, i) => {
+    if (!groups.has(z)) groups.set(z, []);
+    groups.get(z).push(i);
+  });
+  const list = [...groups].map(([z, atoms]) => ({ z, atoms, count: atoms.length }));
+  const out = [];
+  try {
+    if (list.length === 1) return [{ z: list[0].z, count: list[0].count, solid: Manifold.compose(parts.map((p) => p.solid)) }];
+
+    // Every point of the model lies within half a bond plus the stick radius of some atom, so a box of
+    // that half-width around each atom holds its whole share. Only atoms whose bisecting plane can
+    // reach the box trim it.
+    const L = maxBond / 2 + r + 0.5;
+    const reach = 2 * L * Math.sqrt(3);
+    const box = k(Manifold.cube([2 * L, 2 * L, 2 * L], true));
+    const cell = (i) => {
+      const q = Q[i];
+      let m = box.translate(q);
+      Q.forEach((o, j) => {
+        if (j === i) return;
+        const d = sub3(q, o);
+        const len = Math.hypot(...d);
+        if (len > reach || len < 1e-6) return;
+        const n = scale3(d, 1 / len);
+        const next = m.trimByPlane(n, dot3(n, scale3(add3(q, o), 0.5)));
+        m.delete();
+        m = next;
+      });
+      return m;
+    };
+    // The most common element takes what the others leave, so the parts fit with no gaps.
+    list.sort((a, b) => b.count - a.count);
+    const regions = list.slice(1).map((g) => k(Manifold.union(g.atoms.map((i) => k(cell(i))))));
+    const pieces = list.map(() => []);
+    for (const p of parts) {
+      const place = (m) => (p.flip ? k(k(m.rotate([180, 0, 0])).translate(p.t)) : k(m.translate(p.t)));
+      const placedRegions = regions.map(place);
+      placedRegions.forEach((reg, g) => pieces[g + 1].push(k(p.solid.intersect(reg))));
+      pieces[0].push(k(p.solid.subtract(k(Manifold.union(placedRegions)))));
+    }
+    list.forEach((g, i) => {
+      const solid = Manifold.compose(pieces[i].filter((m) => !m.isEmpty()));
+      if (solid.isEmpty()) solid.delete();
+      else out.push({ z: g.z, count: g.count, solid });
+    });
+    return out;
+  } catch (err) {
+    for (const o of out) o.solid.delete();
     throw err;
   } finally {
     for (const o of pool) o.delete();
