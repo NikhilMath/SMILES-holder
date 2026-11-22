@@ -256,18 +256,6 @@ input[type='search']:focus, textarea:focus, select:focus {
 .msg[data-kind='ok'] { color: var(--ink); }
 .msg[data-kind='busy'] { color: var(--ink-3); }
 
-.drawing {
-  margin: 8px 0 0;
-  border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid var(--line);
-  display: flex;
-  justify-content: center;
-  overflow: hidden;
-}
-.drawing:empty { display: none; }
-.drawing svg { width: 100%; height: auto; max-height: 200px; }
-
 /* ---------- controls ---------- */
 .controls { display: flex; flex-direction: column; gap: 14px; }
 .range-head { display: flex; justify-content: space-between; align-items: baseline; }

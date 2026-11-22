@@ -3,7 +3,7 @@ import Module from 'manifold-3d';
 import manifoldWasmUrl from 'manifold-3d/manifold.wasm?url';
 import { Font } from 'three/addons/loaders/FontLoader.js';
 import fontData from './assets/fonts/droid_sans_bold.typeface.json';
-import { smilesToMolecule, smilesToSvg } from './core/molecule.js';
+import { smilesToMolecule } from './core/molecule.js';
 import { buildPenholder, DEFAULTS } from './core/penholder.js';
 import { conformerFor } from './core/conformer.js';
 import { buildSticks, freeSticks, splitByElement, STICK_DEFAULTS } from './core/sticks.js';
@@ -100,12 +100,10 @@ function regenerate() {
   try {
     if (molCache.smiles !== state.smiles) {
       molCache = { smiles: state.smiles, molecule: smilesToMolecule(RDKit, state.smiles) };
-      $('drawing').innerHTML = smilesToSvg(RDKit, state.smiles, 320, 200);
     }
     molecule = molCache.molecule;
   } catch (err) {
     molCache = { smiles: null, molecule: null };
-    $('drawing').innerHTML = '';
     stopConformer();
     showMsg(err.message, 'error');
     return;

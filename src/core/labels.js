@@ -2,6 +2,8 @@
 
 const SUB = 0.62; // subscript / superscript scale
 const CURVE_SEGMENTS = 5;
+// Elements whose hydrides are written hydrogen first (H₂O, H₂S, HCl, …), as RDKit draws them.
+const H_FIRST = new Set(['O', 'S', 'Se', 'Te', 'F', 'Cl', 'Br', 'I']);
 
 /**
  * Decide what text (if any) an atom gets, and on which side its hydrogens go.
@@ -17,7 +19,8 @@ export function labelFor(atom, dirs, { showTerminalCarbons }) {
     (showTerminalCarbons && dirs.length === 1);
   if (!show) return null;
 
-  let side = 'right';
+  // A lone atom is written the usual way: H₂O, H₂S, HCl, but NH₃, CH₄.
+  let side = dirs.length === 0 && H_FIRST.has(atom.sym) ? 'left' : 'right';
   if (atom.hs > 0 && dirs.length > 0) {
     const sx = dirs.reduce((s, d) => s + d.x, 0);
     const sy = dirs.reduce((s, d) => s + d.y, 0);

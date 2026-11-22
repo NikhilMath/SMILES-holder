@@ -71,24 +71,6 @@ export function smilesToMolecule(RDKit, smiles) {
   }
 }
 
-/** Render a small 2D drawing with RDKit (same depiction RDKit uses for the layout). */
-export function smilesToSvg(RDKit, smiles, width = 320, height = 220) {
-  const mol = RDKit.get_mol((smiles || '').trim());
-  if (!mol || !mol.is_valid()) { mol?.delete?.(); return ''; }
-  try {
-    mol.set_new_coords(true);
-    try { mol.straighten_depiction(); } catch { /* ignore */ }
-    return mol.get_svg_with_highlights(JSON.stringify({
-      width, height,
-      bondLineWidth: 1.6,
-      clearBackground: false,
-      padding: 0.08,
-    }));
-  } finally {
-    mol.delete();
-  }
-}
-
 const key = (a, b) => (a < b ? `${a}-${b}` : `${b}-${a}`);
 
 // Pull element symbols and wedge/hash bond info out of a V2000 molblock.
