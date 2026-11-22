@@ -10,11 +10,13 @@
     "build": "vite build",
     "preview": "vite preview",
     "stl": "node scripts/make-stl.mjs",
+    "molecule": "node scripts/make-molecule.mjs",
     "og": "node scripts/make-og-image.mjs"
   },
   "dependencies": {
     "@rdkit/rdkit": "^2026.9.2",
     "manifold-3d": "^3.5.5",
+    "openchemlib": "9.25.2",
     "three": "^0.187.0"
   },
   "devDependencies": {

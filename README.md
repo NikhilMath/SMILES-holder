@@ -6,6 +6,8 @@ Turn any molecule into a 3D-printable pen holder. Type a SMILES string (or searc
 
 The skeletal formula is drawn flat and every bond becomes a vertical wall. Rings become closed cells with a floor, and those cells hold the pens. Atom labels (N, OH, H₃C, …), double bonds and stereo wedges are drawn on the top face as a separate top layer, so you can print that layer in a second colour.
 
+**Just print the molecule:** the link at the bottom switches to a 3D stick model of the molecule itself (its real shape, not the flat drawing). To print with few or no supports, the model is cut flat: either shaved under its lowest atoms (one piece) or split through the middle into two halves that print cut face down and are glued face to face.
+
 ## How it works
 
 Everything runs in the browser. There is no server.
@@ -18,6 +20,7 @@ Everything runs in the browser. There is no server.
 | Preview | three.js |
 | Name → SMILES | PubChem PUG REST |
 | Name suggestions while typing | Built-in list of 130 molecules + PubChem autocomplete (3+ letters) |
+| SMILES → 3D shape for the stick model | [OpenChemLib](https://github.com/cheminfo/openchemlib-js) conformer generator + MMFF94s+, in a Web Worker, checked against RDKit's R/S and E/Z labels |
 
 Code layout:
 
@@ -26,6 +29,8 @@ Code layout:
 - `src/core/penholder.js`: the geometry (walls, double-bond lines, wedges, label posts, cell floors, top layer)
 - `src/core/stl.js`: binary STL writer
 - `src/core/threemf.js`: 3MF writer (one object, body on filament 1 and top layer on filament 2, for Bambu Studio and OrcaSlicer)
+- `src/core/conformer.js`, `src/core/conformer-worker.js`: 3D conformer for the stick model (flattest of a few dozen likely conformers, stereo checked, retried with other seeds)
+- `src/core/sticks.js`: stick-model geometry and the search for the flat cut that needs the fewest supports
 - `src/main.js`, `src/viewer.js`: UI and 3D preview
 - `src/molecules.js`: the example library and the popular molecules used for search suggestions
 - `src/suggest.js`: type-ahead suggestions for the name search
@@ -47,6 +52,14 @@ npm run stl -- "CN1C=NC2=C1C(=O)N(C(=O)N2C)C" caffeine.stl --bondLength=22 --hei
 ```
 
 This writes `caffeine.stl` plus `caffeine-body.stl`, `caffeine-accent.stl` and `caffeine.3mf`.
+
+Stick model of the molecule itself:
+
+```bash
+npm run molecule -- "CN1C=NC2=C1C(=O)N(C(=O)N2C)C" caffeine-sticks.stl --stickBond=15 --stick=5 --hydrogens=true --pieces=two
+```
+
+This writes the print plate and `caffeine-sticks-assembled.stl` (the whole molecule in one piece).
 
 ## Deploy
 
@@ -71,9 +84,18 @@ This also writes `public/apple-touch-icon.png`. LinkedIn caches previews for abo
 - Ring cells need to be about 12 mm across or more to hold a pen. Raise the bond length if the app warns you.
 - Molecules without rings have no closed cells. Use the *Full plate* base so it stands up.
 
+### Stick model (*Just print the molecule*)
+
+- **Best fit** picks one piece or two halves, whichever needs fewer supports. Two halves print cut face down; glue them face to face with superglue. The faces are mirror images, so they line up by hand.
+- Atoms that still need support are shown in orange, and the count is under *Supports*. Tree supports in the slicer handle them.
+- Hydrogens are off by default: a hydrogen hanging under its carbon always needs support. Turn them on for the full molecule.
+- *Whole model STL* is the molecule in one piece, for resin printers or printing with supports.
+- Across the 130 built-in molecules (skeleton only), about two thirds print with no supports at all.
+
 ## Licenses
 
 - RDKit: BSD-3-Clause
+- OpenChemLib: BSD-3-Clause
 - Manifold: Apache-2.0
 - three.js: MIT
 - Droid Sans font: Apache-2.0 (see `src/assets/fonts/DROID_SANS_LICENSE.txt`)
